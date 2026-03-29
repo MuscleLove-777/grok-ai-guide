@@ -1,0 +1,55 @@
+{
+  "Grok 使い方": [
+    {"keyword": "Grok 始め方 2026", "priority": "high", "status": "pending"},
+    {"keyword": "Grok 無料版でできること", "priority": "high", "status": "pending"},
+    {"keyword": "Grok プロンプトの書き方", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok 画像生成 Aurora", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok 音声会話モード", "priority": "medium", "status": "pending"}
+  ],
+  "Grok 料金・プラン": [
+    {"keyword": "X Premium+ 料金 Grok 2026", "priority": "high", "status": "pending"},
+    {"keyword": "SuperGrok 料金 機能まとめ", "priority": "high", "status": "pending"},
+    {"keyword": "Grok 無料 有料 違い", "priority": "high", "status": "pending"},
+    {"keyword": "Grok API 料金体系", "priority": "medium", "status": "pending"}
+  ],
+  "Grok vs ChatGPT": [
+    {"keyword": "Grok ChatGPT 比較 2026年最新", "priority": "high", "status": "pending"},
+    {"keyword": "Grok vs Claude どっちがいい", "priority": "high", "status": "pending"},
+    {"keyword": "Grok vs Gemini 比較", "priority": "medium", "status": "pending"},
+    {"keyword": "AI チャットボット おすすめ 2026", "priority": "medium", "status": "pending"}
+  ],
+  "Grok 最新ニュース": [
+    {"keyword": "Grok 4.20 新機能まとめ", "priority": "high", "status": "pending"},
+    {"keyword": "xAI 資金調達 企業価値", "priority": "high", "status": "pending"},
+    {"keyword": "Grok マルチモーダル対応", "priority": "high", "status": "pending"},
+    {"keyword": "Grok 4エージェント並列処理", "priority": "high", "status": "pending"},
+    {"keyword": "xAI コロッサス スパコン", "priority": "medium", "status": "pending"}
+  ],
+  "Grok × X連携": [
+    {"keyword": "Grok X リアルタイム検索 使い方", "priority": "high", "status": "pending"},
+    {"keyword": "Grok X トレンド分析", "priority": "high", "status": "pending"},
+    {"keyword": "Grok X ポスト自動生成", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok X 画像分析 投稿", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok X ニュースまとめ機能", "priority": "medium", "status": "pending"}
+  ],
+  "Grok API": [
+    {"keyword": "Grok API 入門ガイド", "priority": "high", "status": "pending"},
+    {"keyword": "xAI API コンソール 使い方", "priority": "high", "status": "pending"},
+    {"keyword": "Grok API Python サンプルコード", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok API OpenAI互換モード", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok API ストリーミング実装", "priority": "medium", "status": "pending"}
+  ],
+  "AI チャット比較": [
+    {"keyword": "AI チャット 総合比較 2026", "priority": "high", "status": "pending"},
+    {"keyword": "Grok 低検閲モード 他AIとの違い", "priority": "high", "status": "pending"},
+    {"keyword": "リアルタイム情報 AI 比較", "priority": "medium", "status": "pending"},
+    {"keyword": "コーディング AI 比較 Grok", "priority": "medium", "status": "pending"}
+  ],
+  "Grok 活用事例": [
+    {"keyword": "Grok ビジネス活用 事例集", "priority": "high", "status": "pending"},
+    {"keyword": "Grok リサーチ 情報収集 活用術", "priority": "high", "status": "pending"},
+    {"keyword": "Grok 副業 活用法", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok ブログ記事作成 活用", "priority": "medium", "status": "pending"},
+    {"keyword": "Grok マーケティング 活用", "priority": "medium", "status": "pending"}
+  ]
+}
