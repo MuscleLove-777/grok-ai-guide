@@ -105,12 +105,37 @@ def generate_article_with_retry(config, keyword, category, prompts):
     else:
         prompt = f"キーワード「{keyword}」に関する記事をJSON形式で生成してください。"
 
+    # JSON出力のスキーマ定義
+    article_schema = {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "content": {"type": "string"},
+            "meta_description": {"type": "string"},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "slug": {"type": "string"},
+            "faq": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "question": {"type": "string"},
+                        "answer": {"type": "string"},
+                    },
+                    "required": ["question", "answer"],
+                },
+            },
+        },
+        "required": ["title", "content", "meta_description", "tags", "slug"],
+    }
+
     for attempt in range(1, MAX_RETRIES + 1):
         logger.info("記事生成 試行 %d/%d", attempt, MAX_RETRIES)
         try:
             gen_config = types.GenerateContentConfig(
                 max_output_tokens=8192,
                 response_mime_type="application/json",
+                response_schema=article_schema,
             )
             response = client.models.generate_content(
                 model=config.GEMINI_MODEL, contents=prompt, config=gen_config,
@@ -118,10 +143,12 @@ def generate_article_with_retry(config, keyword, category, prompts):
             response_text = response.text
             logger.info("APIレスポンス受信（%d文字）", len(response_text))
 
+            logger.info("レスポンス先頭300文字: %s", response_text[:300])
+
             try:
                 article = json.loads(response_text)
-            except json.JSONDecodeError:
-                logger.warning("標準パース失敗、修復を試行")
+            except json.JSONDecodeError as je:
+                logger.warning("標準パース失敗 (%s)、修復を試行", je)
                 article = repair_json(response_text)
 
             # リストの場合は最初の要素
@@ -196,8 +223,17 @@ def run(config, prompts=None):
             )
 
         from google.genai import types
+        kw_schema = {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string"},
+                "keyword": {"type": "string"},
+            },
+            "required": ["category", "keyword"],
+        }
         kw_config = types.GenerateContentConfig(
             response_mime_type="application/json",
+            response_schema=kw_schema,
         )
         response = client.models.generate_content(
             model=config.GEMINI_MODEL, contents=prompt, config=kw_config,
