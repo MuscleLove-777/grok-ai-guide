@@ -3,11 +3,14 @@
 
 キーワード選定 → 記事生成 → SEO最適化 → サイトビルド を一括実行する。
 JSON-LD構造化データ（BlogPosting / FAQPage / BreadcrumbList）対応。
+リトライ機能付き。
 """
 import sys
 import os
 import json
 import logging
+import re
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -19,6 +22,148 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+
+
+def repair_json(text: str) -> dict:
+    """壊れたJSONを修復して辞書に変換する"""
+    # コードブロック除去
+    if "```" in text:
+        match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
+        if match:
+            text = match.group(1)
+        else:
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
+
+    # { } の範囲を抽出
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start >= 0 and end > start:
+        text = text[start:end]
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # 壊れたcontent中の改行やクォートを修復
+    # content フィールドの値を正規表現で抽出して修復
+    try:
+        # title, meta_description, tags, slug, faq を先に抽出
+        title_m = re.search(r'"title"\s*:\s*"((?:[^"\\]|\\.)*)"', text)
+        meta_m = re.search(r'"meta_description"\s*:\s*"((?:[^"\\]|\\.)*)"', text)
+        slug_m = re.search(r'"slug"\s*:\s*"((?:[^"\\]|\\.)*)"', text)
+        tags_m = re.search(r'"tags"\s*:\s*\[(.*?)\]', text, re.DOTALL)
+        faq_m = re.search(r'"faq"\s*:\s*\[(.*)\]\s*\}?\s*$', text, re.DOTALL)
+
+        # content は "content": "..." のパターンで最長マッチ
+        content_m = re.search(
+            r'"content"\s*:\s*"(.*?)"\s*,\s*"meta_description"', text, re.DOTALL
+        )
+
+        if title_m and content_m and meta_m and slug_m and tags_m:
+            tags_str = tags_m.group(1).strip()
+            tags = [t.strip().strip('"') for t in tags_str.split(",") if t.strip()]
+
+            result = {
+                "title": title_m.group(1),
+                "content": content_m.group(1),
+                "meta_description": meta_m.group(1),
+                "tags": tags,
+                "slug": slug_m.group(1),
+            }
+
+            if faq_m:
+                try:
+                    faq_text = "[" + faq_m.group(1) + "]"
+                    result["faq"] = json.loads(faq_text)
+                except Exception:
+                    result["faq"] = []
+
+            return result
+    except Exception as e:
+        logger.warning("JSON修復に失敗: %s", e)
+
+    raise ValueError("JSONの修復に失敗しました")
+
+
+def generate_article_with_retry(config, keyword, category, prompts):
+    """リトライ機能付き記事生成"""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=config.GEMINI_API_KEY)
+    articles_dir = Path(config.BASE_DIR) / "output" / "articles"
+    articles_dir.mkdir(parents=True, exist_ok=True)
+
+    if prompts and hasattr(prompts, "build_article_prompt"):
+        prompt = prompts.build_article_prompt(keyword, category, config)
+    else:
+        prompt = f"キーワード「{keyword}」に関する記事をJSON形式で生成してください。"
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        logger.info("記事生成 試行 %d/%d", attempt, MAX_RETRIES)
+        try:
+            gen_config = types.GenerateContentConfig(
+                max_output_tokens=8192,
+                response_mime_type="application/json",
+            )
+            response = client.models.generate_content(
+                model=config.GEMINI_MODEL, contents=prompt, config=gen_config,
+            )
+            response_text = response.text
+            logger.info("APIレスポンス受信（%d文字）", len(response_text))
+
+            try:
+                article = json.loads(response_text)
+            except json.JSONDecodeError:
+                logger.warning("標準パース失敗、修復を試行")
+                article = repair_json(response_text)
+
+            # リストの場合は最初の要素
+            if isinstance(article, list):
+                article = article[0]
+
+            # 必須フィールドチェック
+            required = ["title", "content", "meta_description", "tags", "slug"]
+            missing = [f for f in required if f not in article]
+            if missing:
+                raise ValueError(f"必須フィールドが不足: {missing}")
+
+            if not isinstance(article["tags"], list):
+                article["tags"] = [article["tags"]]
+
+            article["slug"] = re.sub(
+                r"[^a-z0-9-]", "", article["slug"].lower().replace(" ", "-")
+            )
+
+            # 保存
+            article["keyword"] = keyword
+            article["category"] = category
+            article["generated_at"] = datetime.now().isoformat()
+
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            slug = article.get("slug", "untitled")
+            filename = f"{timestamp}_{slug}.json"
+            file_path = articles_dir / filename
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(article, f, ensure_ascii=False, indent=2)
+
+            article["file_path"] = str(file_path)
+            logger.info("記事生成成功: %s", article["title"])
+            return article
+
+        except Exception as e:
+            logger.warning("試行 %d 失敗: %s", attempt, e)
+            if attempt < MAX_RETRIES:
+                time.sleep(5)
+            else:
+                raise
 
 
 def run(config, prompts=None):
@@ -50,17 +195,15 @@ def run(config, prompts=None):
                 '{"category": "カテゴリ名", "keyword": "キーワード"}'
             )
 
+        from google.genai import types
+        kw_config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+        )
         response = client.models.generate_content(
-            model=config.GEMINI_MODEL, contents=prompt
+            model=config.GEMINI_MODEL, contents=prompt, config=kw_config,
         )
         response_text = response.text.strip()
         logger.info("API応答: %s", response_text[:500])
-
-        if "```" in response_text:
-            response_text = response_text.split("```")[1]
-            if response_text.startswith("json"):
-                response_text = response_text[4:]
-            response_text = response_text.strip()
 
         data = json.loads(response_text)
         # リストで返ってきた場合は最初の要素を使用
@@ -74,16 +217,12 @@ def run(config, prompts=None):
         logger.error("キーワード選定に失敗: %s", e)
         sys.exit(1)
 
-    # ステップ2: 記事生成
-    logger.info("ステップ2: 記事生成")
+    # ステップ2: 記事生成（リトライ機能付き）
+    logger.info("ステップ2: 記事生成（リトライ付き）")
     try:
-        from blog_engine.article_generator import ArticleGenerator
         from seo_optimizer import GrokSEOOptimizer
 
-        generator = ArticleGenerator(config)
-        article = generator.generate_article(
-            keyword=keyword, category=category, prompts=prompts
-        )
+        article = generate_article_with_retry(config, keyword, category, prompts)
         logger.info("記事生成完了: %s", article.get("title", "不明"))
 
         optimizer = GrokSEOOptimizer(config)
