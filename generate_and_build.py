@@ -54,6 +54,7 @@ def run(config, prompts=None):
             model=config.GEMINI_MODEL, contents=prompt
         )
         response_text = response.text.strip()
+        logger.info("API応答: %s", response_text[:500])
 
         if "```" in response_text:
             response_text = response_text.split("```")[1]
@@ -62,6 +63,9 @@ def run(config, prompts=None):
             response_text = response_text.strip()
 
         data = json.loads(response_text)
+        # リストで返ってきた場合は最初の要素を使用
+        if isinstance(data, list):
+            data = data[0]
         category = data["category"]
         keyword = data["keyword"]
         logger.info("選定結果 - カテゴリ: %s, キーワード: %s", category, keyword)
