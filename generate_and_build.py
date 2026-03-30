@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 
 # blog_engineへのパスを追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 logging.basicConfig(
     level=logging.INFO,

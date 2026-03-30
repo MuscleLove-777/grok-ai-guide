@@ -42,8 +42,8 @@ THEME = {
 }
 
 MAX_ARTICLE_LENGTH = 4000
-ARTICLES_PER_DAY = 3
-SCHEDULE_HOURS = [7, 12, 19]
+ARTICLES_PER_DAY = 2
+SCHEDULE_HOURS = [8, 19]
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.5-flash"
@@ -78,3 +78,11 @@ AFFILIATE_TAG = "musclelove07-22"
 ADSENSE_CLIENT_ID = os.environ.get("ADSENSE_CLIENT_ID", "")
 ADSENSE_ENABLED = bool(ADSENSE_CLIENT_ID)
 DASHBOARD_PORT = 8099
+
+# Google Analytics (GA4)
+GOOGLE_ANALYTICS_ID = "G-CSFVD34MKK"
+
+# Google Search Console 認証ファイル
+SITE_VERIFICATION_FILES = {
+    "googlea31edabcec879415.html": "google-site-verification: googlea31edabcec879415.html",
+}
