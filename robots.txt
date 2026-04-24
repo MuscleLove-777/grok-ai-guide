@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://musclelove-777.github.io/grok-ai-guide/sitemap.xml
