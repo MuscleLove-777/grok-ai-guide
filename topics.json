@@ -57,7 +57,8 @@
     {
       "keyword": "Grok vs Claude どっちがいい",
       "priority": "high",
-      "status": "pending"
+      "status": "done",
+      "done_at": "2026-05-19T10:06:01.008110"
     },
     {
       "keyword": "Grok vs Gemini 比較",
